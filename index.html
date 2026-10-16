@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Mon bac">
+<title>Mon bac hydro</title>
+<style>
+:root{--bg:#f4f7f2;--card:#fff;--tx:#1b2a1f;--mut:#6b7c6f;--bd:#dfe7dc;--ac:#2f9e5b;--ph:#3b82f6;--ec:#e8890c;--bad:#d64545;--ok:#2f9e5b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#101712;--card:#18221b;--tx:#e8f0e9;--mut:#8da392;--bd:#27352b;--ac:#4cc37f;--ph:#6aa3ff;--ec:#f3a23a;--bad:#ef6a6a;--ok:#4cc37f;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#101712;--card:#18221b;--tx:#e8f0e9;--mut:#8da392;--bd:#27352b;--ac:#4cc37f;--ph:#6aa3ff;--ec:#f3a23a;--bad:#ef6a6a;--ok:#4cc37f;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 -apple-system,system-ui,Segoe UI,Roboto,sans-serif;max-width:560px;margin:auto;padding:16px}
+h1{font-size:22px;margin:4px 0 14px}h2{font-size:15px;margin:0 0 10px;color:var(--mut);font-weight:600}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:14px;margin-bottom:12px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#now{grid-template-columns:repeat(3,1fr)}.big{font-size:28px;font-weight:700;line-height:1}
+.lab{font-size:13px;color:var(--mut)}
+.badge{display:inline-block;font-size:12px;padding:2px 8px;border-radius:99px;margin-top:6px;font-weight:600}
+.ok{background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok)}
+.bad{background:color-mix(in srgb,var(--bad) 18%,transparent);color:var(--bad)}
+label{display:block;font-size:13px;color:var(--mut);margin-bottom:3px}
+input{width:100%;font:inherit;padding:10px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx)}
+.f{margin-bottom:10px}
+button{font:inherit;font-weight:600;border:0;border-radius:12px;padding:12px;background:var(--ac);color:#fff;width:100%;cursor:pointer}
+button.s{background:transparent;color:var(--mut);border:1px solid var(--bd);margin-top:8px;font-weight:500}
+.h{display:flex;justify-content:space-between;gap:8px;padding:10px 0;border-top:1px solid var(--bd);font-size:14px}
+.h:first-of-type{border-top:0}
+.h small{color:var(--mut);display:block}
+.x{background:none;color:var(--mut);width:auto;padding:0 6px;font-size:18px}
+svg{width:100%;height:auto;display:block}.mini{font-size:13px;color:var(--mut);margin-top:8px}textarea{width:100%;font:inherit;font-size:12px;padding:10px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx);margin-top:8px}.pre{margin-top:8px}
+details summary{cursor:pointer;color:var(--mut);font-size:14px}
+</style>
+</head>
+<body>
+<h1>🌱 Mon bac hydro</h1>
+
+<div id="dlg" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:50;align-items:center;justify-content:center;padding:20px"><div class="card" style="width:100%;max-width:340px;margin:0"><div id="dlgm" style="margin-bottom:12px"></div><div class="row"><button class="s" id="dln" style="margin:0">Annuler</button><button id="dly" style="background:var(--bad)">Confirmer</button></div></div></div>
+<div id="toast" style="display:none;position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--tx);color:var(--bg);padding:12px;border-radius:12px;z-index:60;text-align:center;font-size:14px"></div>
+<div class="row" id="now"></div>
+<div class="card"><h2>🧮 Calculateur de dose</h2><div id="calc"></div></div>
+<div class="card"><h2>💧 Eau</h2><div id="wat"></div></div>
+
+<div class="card"><h2>pH</h2><div id="cph"></div></div>
+<div class="card"><h2>EC (mS/cm)</h2><div id="cec"></div></div>
+<div class="card"><h2>Température de l'eau (°C)</h2><div id="ctp"></div></div>
+
+<div class="card">
+<h2>Nouvelle mesure</h2>
+<div class="row">
+<div class="f"><label>pH</label><input id="ph" type="number" step="0.1" inputmode="decimal" placeholder="6.0"></div>
+<div class="f"><label>EC (mS/cm)</label><input id="ec" type="number" step="0.1" inputmode="decimal" placeholder="1.6"></div>
+<div class="f"><label>Engrais ajouté (ml)</label><input id="fert" type="number" step="1" inputmode="decimal" placeholder="0"></div>
+<div class="f"><label>pH- ajouté (ml)</label><input id="phm" type="number" step="0.5" inputmode="decimal" placeholder="0"></div>
+<div class="f"><label>Température (°C)</label><input id="temp" type="number" step="0.1" inputmode="decimal" placeholder="21"></div>
+<div class="f"><label>Niveau du bac après appoint (L)</label><input id="level" type="number" step="0.5" inputmode="decimal" placeholder="18"></div>
+<div class="f"><label>Eau ajoutée (L)</label><input id="water" type="number" step="0.5" inputmode="decimal" placeholder="0"></div>
+</div>
+<div class="f"><label>Note (optionnel)</label><input id="note" type="text" placeholder="Eau changée, feuilles jaunes…"></div>
+<div class="mini" style="margin:0 0 10px">Mesure d’abord, ajoute ensuite : la mesure suivante permet au calculateur d’apprendre l’effet de tes doses.</div>
+<button id="add">Enregistrer</button>
+</div>
+
+<div class="card"><h2>Historique</h2><div id="hist"></div></div>
+
+<div class="card">
+<details><summary>Réglages & données</summary>
+<div class="row" style="margin-top:10px">
+<div class="f"><label>pH min</label><input id="pmin" type="number" step="0.1"></div>
+<div class="f"><label>pH max</label><input id="pmax" type="number" step="0.1"></div>
+<div class="f"><label>EC min</label><input id="emin" type="number" step="0.1"></div>
+<div class="f"><label>EC max</label><input id="emax" type="number" step="0.1"></div>
+<div class="f"><label>Temp min (°C)</label><input id="tmin" type="number" step="0.5"></div>
+<div class="f"><label>Temp max (°C)</label><input id="tmax" type="number" step="0.5"></div>
+<div class="f"><label>Volume du bac (L)</label><input id="vol" type="number" step="1"></div>
+<div class="f"><label>Départ : ml pH- pour −1 pH</label><input id="phs" type="number" step="0.5"></div>
+<div class="f"><label>Départ : ml engrais pour +0,1 EC</label><input id="ecs" type="number" step="0.5"></div>
+</div>
+<h2 style="margin-top:16px">Sauvegarde</h2>
+<div class="mini" style="margin:0">Tes données sont gardées dans la mémoire de ce navigateur, sur cet appareil uniquement. Exporte-les de temps en temps.</div>
+<button class="s" id="xcsv">Exporter en CSV (Excel)</button>
+<button class="s" id="xjson">Exporter une sauvegarde (JSON)</button>
+<button class="s" id="xtxt">Afficher le texte de sauvegarde</button>
+<textarea id="bk" rows="4" placeholder="Colle ici une sauvegarde JSON puis appuie sur Importer"></textarea>
+<button class="s" id="ximp">Importer le texte collé</button>
+<button class="s" id="clear">Vider toutes les données (démo)</button>
+</details>
+</div>
+
+<script>
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';clearTimeout(toast.h);toast.h=setTimeout(()=>{t.style.display='none'},3500)}
+window.alert=toast;
+function ask(m,ok){const g=document.getElementById('dlg');document.getElementById('dlgm').textContent=m;g.style.display='flex';document.getElementById('dly').onclick=()=>{g.style.display='none';ok()};document.getElementById('dln').onclick=()=>{g.style.display='none'}}
+const K='hydro-v1',KT='hydro-t1';
+let E=[],T={pmin:5.5,pmax:6.5,emin:1.2,emax:2.0,tmin:18,tmax:24,vol:20,phs:3,ecs:5};
+function load(){try{const a=localStorage.getItem(K);if(a!==null)E=JSON.parse(a);else seed();const t=localStorage.getItem(KT);if(t)T=Object.assign(T,JSON.parse(t))}catch(e){seed()}}
+function save(){try{localStorage.setItem(K,JSON.stringify(E));localStorage.setItem(KT,JSON.stringify(T))}catch(e){}}
+function seed(){const d=864e5,n=Date.now();const v=[[6.8,1.1,60,0,"Remplissage"],[6.2,1.5,0,3,""],[6.0,1.4,0,0,""],[6.4,1.2,40,0,""],[6.9,1.3,0,4,"pH qui monte"],[6.1,1.7,20,0,""],[6.0,1.6,0,0,""]];E=v.map((r,i)=>({t:n-(6-i)*d,ph:r[0],ec:r[1],fert:r[2],phm:r[3],note:r[4],temp:[20.5,21,21.8,22.4,21.2,20.8,21.5][i]}))}
+const $=id=>document.getElementById(id);
+const f=(x,d=1)=>x==null?'–':Number(x).toFixed(d);
+function status(v,a,b){return v>=a&&v<=b?['ok','Dans la cible']:['bad',v<a?'Trop bas':'Trop haut']}
+function card(lab,v,a,b,col){if(v==null)return`<div class="card"><div class="lab">${lab}</div><div class="big">–</div></div>`;const[s,t]=status(v,a,b);return`<div class="card" style="margin:0 0 12px"><div class="lab">${lab}</div><div class="big" style="color:${col}">${f(v)}</div><span class="badge ${s}">${t}</span></div>`}
+function chart(key,a,b,col){const d=E.filter(x=>x[key]!=null).slice(-14);if(d.length<2)return'<div class="lab">Ajoute au moins 2 mesures.</div>';
+const vs=d.map(x=>x[key]),lo=Math.min(a,...vs)-.2,hi=Math.max(b,...vs)+.2,W=320,H=130,p=14;
+const X=i=>p+i*(W-2*p)/(d.length-1),Y=v=>H-p-(v-lo)/(hi-lo)*(H-2*p);
+const pts=d.map((x,i)=>X(i)+','+Y(x[key])).join(' ');
+const dots=d.map((x,i)=>`<circle cx="${X(i)}" cy="${Y(x[key])}" r="3.5" fill="${col}"/>`).join('');
+return`<svg viewBox="0 0 ${W} ${H}"><rect x="${p}" y="${Y(b)}" width="${W-2*p}" height="${Y(a)-Y(b)}" fill="${col}" opacity=".13" rx="4"/><polyline points="${pts}" fill="none" stroke="${col}" stroke-width="2.5" stroke-linejoin="round"/>${dots}<text x="${p}" y="${Y(b)-3}" font-size="9" fill="currentColor" opacity=".55">cible ${a}–${b}</text></svg>`}
+function render(){const l={ph:lv('ph'),ec:lv('ec'),temp:lv('temp')};
+$('now').innerHTML=card('pH actuel',l.ph,T.pmin,T.pmax,'var(--ph)')+card('EC actuelle',l.ec,T.emin,T.emax,'var(--ec)')+card('Eau °C',l.temp,T.tmin,T.tmax,'#14b8a6');
+$('cph').innerHTML=chart('ph',T.pmin,T.pmax,'var(--ph)');
+$('cec').innerHTML=chart('ec',T.emin,T.emax,'var(--ec)');
+$('ctp').innerHTML=chart('temp',T.tmin,T.tmax,'#14b8a6');calc();water();
+$('hist').innerHTML=E.length?E.slice().reverse().map(x=>{const dt=new Date(x.t).toLocaleDateString('fr-FR',{day:'numeric',month:'short'})+' '+new Date(x.t).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+const add=[x.fert>0?`🧪 ${x.fert} ml engrais`:'',x.phm>0?`⬇️ ${x.phm} ml pH-`:'',x.water>0?`💧 +${x.water} L`:'',x.level!=null?`niveau ${x.level} L`:''].filter(Boolean).join(' · ');
+return`<div class="h"><div><b>${dt}</b><small>${add}${add&&x.note?' · ':''}${x.note?esc(x.note):''}</small></div><div style="text-align:right;white-space:nowrap">pH <b>${f(x.ph)}</b><br>EC <b>${f(x.ec)}</b>${x.temp!=null?'<br>'+f(x.temp)+'°C':''}</div><button class="x" data-t="${x.t}">×</button></div>`}).join(''):'<div class="lab">Aucune mesure.</div>';
+['pmin','pmax','emin','emax','tmin','tmax','vol','phs','ecs'].forEach(k=>$(k).value=T[k])}
+function esc(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+$('add').onclick=()=>{const ph=parseFloat($('ph').value),ec=parseFloat($('ec').value),tp=parseFloat($('temp').value);if(isNaN(ph)&&isNaN(ec)&&isNaN(tp)){alert('Entre au moins une mesure');return}
+const last=E[E.length-1]||{};
+E.push({t:Date.now(),ph:isNaN(ph)?null:ph,ec:isNaN(ec)?null:ec,fert:parseFloat($('fert').value)||0,phm:parseFloat($('phm').value)||0,temp:isNaN(tp)?null:tp,level:parseFloat($('level').value)||null,water:parseFloat($('water').value)||0,note:$('note').value.trim()});
+['ph','ec','fert','phm','temp','level','water','note'].forEach(i=>$(i).value='');save();render()};
+$('hist').onclick=e=>{const t=e.target.dataset.t;if(t)ask('Supprimer cette mesure ?',()=>{E=E.filter(x=>String(x.t)!==t);save();render()})};
+['pmin','pmax','emin','emax','tmin','tmax','vol','phs','ecs'].forEach(k=>$(k).onchange=()=>{const v=parseFloat($(k).value);if(!isNaN(v)){T[k]=v;save();render()}});
+$('clear').onclick=()=>{ask('Tout effacer ?',()=>{E=[];save();render()})};
+function lv(k){for(let i=E.length-1;i>=0;i--)if(E[i][k]!=null)return E[i][k]}
+let D={phm:0,fert:0};
+const pl=n=>n+' mesure'+(n>1?'s':'');
+function learn(){let dp=0,mp=0,np=0,de=0,me=0,ne=0;
+for(let i=0;i<E.length-1;i++){const a=E[i],b=E[i+1];if(b.t-a.t>72*36e5)continue;
+if(a.phm>0&&a.ph!=null&&b.ph!=null){dp+=Math.max(0,a.ph-b.ph);mp+=a.phm;np++}
+if(a.fert>0&&a.ec!=null&&b.ec!=null){de+=Math.max(0,b.ec-a.ec);me+=a.fert;ne++}}
+const w=5;return{kp:(dp+w/T.phs)/(mp+w),np,ke:(de+w*.1/T.ecs)/(me+w),ne}}
+function line(t,s){return'<div class="h"><div><b>'+t+'</b><small>'+s+'</small></div></div>'}
+function calc(){const k=learn(),V=T.vol,ph=lv('ph'),ec=lv('ec'),pm=(T.pmin+T.pmax)/2,em=(T.emin+T.emax)/2;D={phm:0,fert:0};let h='';
+if(ph==null&&ec==null){$('calc').innerHTML='<div class="lab">Entre une mesure pour obtenir des conseils.</div>';return}
+if(ph!=null){if(ph>T.pmax){D.phm=Math.round((ph-pm)/k.kp*2)/2;h+=line('pH '+f(ph)+' → '+f(pm),'Ajoute ≈ '+D.phm+' ml de pH-')}else if(ph<T.pmin)h+=line('pH '+f(ph)+' trop bas','Remonte-le avec du pH+ (non calculé ici)');else h+=line('pH '+f(ph),'Dans la cible, rien à faire')}
+if(ec!=null){if(ec<T.emin){D.fert=Math.round((em-ec)/k.ke);h+=line('EC '+f(ec)+' → '+f(em),'Ajoute ≈ '+D.fert+' ml d’engrais')}else if(ec>T.emax){h+=line('EC '+f(ec)+' trop haute','Dilue avec ≈ '+f(V*(ec/em-1))+' L d’eau')}else h+=line('EC '+f(ec),'Dans la cible, rien à faire')}
+if(D.phm||D.fert)h+='<button class="s pre" id="pre">Pré-remplir le formulaire</button>';
+h+='<div class="mini">Appris sur ton bac de '+V+' L : 1 ml de pH- ≈ −'+f(k.kp,2)+' pH ('+f(1/k.kp)+' ml par point, '+pl(k.np)+') · 1 ml d’engrais ≈ +'+f(k.ke,3)+' EC ('+pl(k.ne)+'). Verse la moitié, mélange, remesure, puis ajuste.</div>';
+$('calc').innerHTML=h}
+$('calc').onclick=e=>{if(e.target.id==='pre'){$('phm').value=D.phm||'';$('fert').value=D.fert||'';$('phm').scrollIntoView({behavior:'smooth',block:'center'})}};
+function water(){const now=Date.now(),w7=E.filter(x=>x.t>now-7*864e5),tot=w7.reduce((s,x)=>s+(x.water||0),0),lvl=lv('level'),V=T.vol;let h='<div class="row"><div><div class="lab">Niveau</div>';
+if(lvl!=null){const pc=Math.round(lvl/V*100);h+='<div class="big">'+f(lvl)+' L</div><span class="badge '+(pc<50?'bad':'ok')+'">'+pc+' % du bac</span>'}else h+='<div class="big">–</div>';
+const span=w7.length?Math.max(3,(now-w7[0].t)/864e5):3,rate=tot/span;
+h+='</div><div><div class="lab">Appoint (7 j)</div><div class="big">'+f(tot)+' L</div><div class="lab">≈ '+f(rate)+' L/jour</div></div></div>';
+if(lvl!=null&&rate>0){const d=(lvl-V*.5)/rate;h+='<div class="mini">'+(d>0?'Niveau à 50 % dans ≈ '+f(d,0)+' j':'Appoint conseillé maintenant')+'</div>'}
+$('wat').innerHTML=h}
+const n2=v=>v==null||v===''?'':String(v).replace('.',',');
+function csv(){return'date;ph;ec;temp_c;engrais_ml;ph_moins_ml;niveau_l;eau_ajoutee_l;note\n'+E.map(x=>[new Date(x.t).toISOString(),n2(x.ph),n2(x.ec),n2(x.temp),n2(x.fert||0),n2(x.phm||0),n2(x.level),n2(x.water||0),'"'+(x.note||'').replace(/"/g,'""')+'"'].join(';')).join('\n')}
+async function dl(name,data){let d=null;try{d=await window.claude.use('downloads')}catch(e){}
+if(!d){try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'text/plain'}));a.download=name;document.body.appendChild(a);a.click();a.remove();toast('Export lancé');}catch(e){$('bk').value=data;alert('Texte de sauvegarde affiché dans la zone en dessous : copie-le.')}return}
+try{await d.save({filename:name,data})}catch(e){if(!e||e.code!=='declined')alert('Export impossible ('+((e&&e.code)||'erreur')+')')}}
+$('xcsv').onclick=()=>dl('hydro-mesures.csv',csv());
+$('xjson').onclick=()=>dl('hydro-sauvegarde.json',JSON.stringify({E,T}));
+$('xtxt').onclick=()=>{$('bk').value=JSON.stringify({E,T});$('bk').select()};
+$('ximp').onclick=()=>{try{const o=JSON.parse($('bk').value);if(!Array.isArray(o.E))throw 0;const have=new Set(E.map(x=>x.t));o.E.forEach(x=>{if(x&&typeof x.t==='number'&&!have.has(x.t))E.push(x)});E.sort((a,b)=>a.t-b.t);if(o.T)T=Object.assign(T,o.T);save();render();$('bk').value='';alert('Import terminé')}catch(e){alert('Texte de sauvegarde invalide')}};
+load();render();
+</script>
+</body>
+</html>
